@@ -168,8 +168,7 @@ test('a wrong password reports the refusal, and missing credentials explain the 
   const answer = () => [400, { errors: [{ message: 'Invalid credentials.', extensions: { code: 'BAD_USER_INPUT' } }], data: null }];
   await withFetch(answer, () => assert.rejects(refused.collections({}), /^Error: Cosmos refused the sign-in as marco@example.com: Invalid credentials\.$/));
 
-  // Claude Code passes plugin options the user left unset as their placeholders.
-  signInAs('${user_config.username}', '${user_config.password}');
+  signInAs('', '');
   assert.equal(await findCredentials(), null);
   const signedOut = await freshClient();
   await withFetch(() => assert.fail('no request without credentials'), async () => {

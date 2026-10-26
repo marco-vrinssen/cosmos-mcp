@@ -12,15 +12,9 @@ export const SETUP = [
   `  security add-generic-password -s ${SERVICE} -a <email or username> -w`,
 ].join('\n');
 
-// Claude Code passes a plugin option the user left unset as its literal ${user_config.…} placeholder (checked 2026-10-26).
-function given(value) {
-  return value && !value.startsWith('${') ? value : null;
-}
-
 // The environment wins over the keychain, which is read without a shell. A missing item means signed out, not an error.
 export async function findCredentials() {
-  const username = given(process.env.COSMOS_USERNAME);
-  const password = given(process.env.COSMOS_PASSWORD);
+  const { COSMOS_USERNAME: username, COSMOS_PASSWORD: password } = process.env;
   if (username && password) return { username, password };
   if (process.platform !== 'darwin') return null;
   try {

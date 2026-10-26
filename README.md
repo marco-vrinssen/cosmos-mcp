@@ -46,14 +46,7 @@ Requires Node 22 or later and git.
 
 ### Claude Code
 
-As a plugin from the marketplace `marco-vrinssen`. The install asks for your Cosmos login and keeps the password in your system's secure storage. Leave both empty for public content only:
-
-```
-/plugin marketplace add marco-vrinssen/claude-plugins
-/plugin install moodboard-reader@marco-vrinssen
-```
-
-Or as a plain MCP server, which signs in with the keychain item from Sign in:
+The server signs in with the keychain item from Sign in, or reads public content only:
 
 ```sh
 claude mcp add --scope user cosmos -- npx -y github:marco-vrinssen/cosmos-mcp#semver:^1
