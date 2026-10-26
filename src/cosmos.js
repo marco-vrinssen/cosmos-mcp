@@ -1,5 +1,4 @@
 import pkg from '../package.json' with { type: 'json' };
-import { SETUP, findCredentials } from './auth.js';
 
 // Cosmos has no public API, so every query to the GraphQL API behind its web app stays in this file.
 const API = 'https://api.www.cosmos.so/graphql';
@@ -11,6 +10,11 @@ const HEADERS = {
   'user-agent': `cosmos-mcp/${pkg.version} (+https://github.com/marco-vrinssen/cosmos-mcp)`,
   'x-client-name': 'cosmos-mcp',
 };
+
+export const SETUP = [
+  'Not signed in to Cosmos, so your own collections are not readable. Public elements and collections work without a sign-in.',
+  'To sign in, set COSMOS_USERNAME (your email or username) and COSMOS_PASSWORD in the env of this MCP server, then restart the MCP host.',
+].join('\n');
 
 const LOGIN = `mutation Login($input: LoginInput!) { auth { login(input: $input) { accessToken } } }`;
 
@@ -99,21 +103,20 @@ async function gql(query, variables, token) {
 }
 
 async function signIn() {
-  const credentials = await findCredentials();
-  if (!credentials) return null;
+  const { COSMOS_USERNAME: username, COSMOS_PASSWORD: password } = process.env;
+  if (!username || !password) return null;
   let token;
   try {
-    const data = await gql(LOGIN, { input: { identifier: credentials.username, password: credentials.password } });
-    token = data.auth.login.accessToken;
+    token = (await gql(LOGIN, { input: { identifier: username, password } })).auth.login.accessToken;
   } catch (error) {
     if (!error.code) throw error;
-    throw new Error(`Cosmos refused the sign-in as ${credentials.username}: ${error.message}`);
+    throw new Error(`Cosmos refused the sign-in as ${username}: ${error.message}`);
   }
   const { me } = await gql(ME, undefined, token);
   return { token, userId: String(me.id), username: me.username };
 }
 
-// Parallel calls share one sign-in. Without credentials nothing is kept, so a keychain item added later works without a restart.
+// Parallel calls share one sign-in.
 async function signedIn() {
   if (session) return session;
   signingIn ||= signIn().finally(() => { signingIn = null; });

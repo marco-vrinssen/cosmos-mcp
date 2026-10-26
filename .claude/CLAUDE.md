@@ -9,7 +9,8 @@
 - Errors carry `extensions.code`: `AUTHENTICATION` for a missing or expired token, `NOT_FOUND` for unknown users and collections, `AUTHORIZATION` for someone else's private data. Cosmos sends some as HTTP 200.
 - Pass ids as variables. An inline string literal fails the `ClusterId` type (checked 2026-10-26).
 - Without a login, `searchElements`, `cluster(input: { slug, ownerUsername })`, `user(username)`, `clusterConnections` on public collections and `searchClusters` work. `clusters`, `userClusters` and `searchClusters` with a `userId` filter need one (checked 2026-10-26).
-- Credentials come from `COSMOS_USERNAME` and `COSMOS_PASSWORD`, else on macOS from the keychain service `cosmos.so` with the login as account, read through `execFile` without a shell. Never log or return the password or token.
+- The login comes only from `COSMOS_USERNAME` and `COSMOS_PASSWORD` in the environment, the common way for MCP servers run from GitHub. The MCP client config supplies them. No keychain code, login command or token storage. Never log or return the password or token.
+- Cosmos offers no OAuth for other apps (checked 2026-10-26): no public API and no OAuth metadata.
 - Without credentials the server still starts and public reads work. Only `collections` without a query answers with `SETUP`.
 - Tool output stays plain text. The server instructions in `src/server.js` reach every model's context, so keep them short.
 - `wrangler.jsonc` keeps the Worker private. No Worker is deployed, because none of the owner's Workers calls it yet.

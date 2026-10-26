@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { findCredentials } from '../src/auth.js';
 import { collections, readCollection, search } from '../src/cosmos.js';
 
 // The live checks read Cosmos itself, so they fail when an API shape the client relies on changes.
@@ -34,6 +33,6 @@ test('found collections open and search by their links', async () => {
   assert.match(await search({ query: 'texture', within: url, limit: 2 }), new RegExp(`^\\d+ results for "texture" in ${url}, `));
 });
 
-test('signed in, collections lists your own', { skip: !(await findCredentials()) && 'no Cosmos credentials set' }, async () => {
+test('signed in, collections lists your own', { skip: !process.env.COSMOS_PASSWORD && 'COSMOS_USERNAME and COSMOS_PASSWORD not set' }, async () => {
   assert.match(await collections({}), /^Collections of @[\w.-]+ \(https:\/\/www\.cosmos\.so\/[\w.-]+\), private ones included:/);
 });

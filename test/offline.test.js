@@ -2,10 +2,9 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { test } from 'node:test';
 
-import { SETUP, findCredentials } from '../src/auth.js';
+import { SETUP } from '../src/cosmos.js';
 
-// The offline checks replace fetch with Cosmos-shaped answers. An empty PATH hides the keychain tool, so only the environment signs in.
-process.env.PATH = '';
+// The offline checks replace fetch with Cosmos-shaped answers.
 
 // Each test loads its own copy of the client, so a session never leaks from one test into the next.
 let copies = 0;
@@ -169,7 +168,6 @@ test('a wrong password reports the refusal, and missing credentials explain the 
   await withFetch(answer, () => assert.rejects(refused.collections({}), /^Error: Cosmos refused the sign-in as marco@example.com: Invalid credentials\.$/));
 
   signInAs('', '');
-  assert.equal(await findCredentials(), null);
   const signedOut = await freshClient();
   await withFetch(() => assert.fail('no request without credentials'), async () => {
     await assert.rejects(signedOut.collections({}), (error) => error.message.startsWith(SETUP));
@@ -187,7 +185,7 @@ test('a link to nothing says so instead of passing on Cosmos\'s error', async ()
 });
 
 test('the stdio server lists three read-only tools with usage instructions and explains a missing sign-in', async () => {
-  const env = { ...process.env, PATH: '' };
+  const env = { ...process.env };
   delete env.COSMOS_USERNAME;
   delete env.COSMOS_PASSWORD;
   const child = spawn(process.execPath, ['src/index.js'], { env, stdio: ['pipe', 'pipe', 'inherit'] });

@@ -29,16 +29,12 @@ Element links like `https://www.cosmos.so/e/<id>` appear in every answer.
 
 ## Sign in
 
-Public elements and collections need no account. Your own collections, private ones included, need your Cosmos login:
+Public elements and collections need no account. Your own collections, private ones included, need your Cosmos login in the server's environment:
 
-1. Set `COSMOS_USERNAME` to your email or username and `COSMOS_PASSWORD` to your password in the server's environment.
-2. Or, on macOS, store the login in the keychain. The command asks for the password, so it stays out of the shell history:
-
-```sh
-security add-generic-password -s cosmos.so -a you@example.com -w
-```
-
-Environment variables win over the keychain. A keychain item added later works without a restart.
+| Variable | Value |
+|---|---|
+| `COSMOS_USERNAME` | Your Cosmos email or username |
+| `COSMOS_PASSWORD` | Your Cosmos password |
 
 ## Install
 
@@ -46,21 +42,17 @@ Requires Node 22 or later and git.
 
 ### Claude Code
 
-The server signs in with the keychain item from Sign in, or reads public content only:
-
-```sh
-claude mcp add --scope user cosmos -- npx -y github:marco-vrinssen/cosmos-mcp#semver:^1
-```
-
-Without the keychain, pass the login when adding the server. Claude Code then stores it in its config file in plain text:
+With your login:
 
 ```sh
 claude mcp add --scope user --env COSMOS_USERNAME=<login> --env COSMOS_PASSWORD=<password> cosmos -- npx -y github:marco-vrinssen/cosmos-mcp#semver:^1
 ```
 
+For public content only, leave out both `--env` options.
+
 ### Claude desktop app
 
-In Settings, Developer, Edit Config, add the server and restart the app. Leave out `env` when the login is in the macOS keychain or for public content only:
+In Settings, Developer, Edit Config, add the server and restart the app. Leave out `env` for public content only:
 
 ```json
 {
@@ -78,7 +70,7 @@ Then ask something like "find brutalist staircases on Cosmos" or "what is in my 
 
 ### Other agents
 
-Cursor, VS Code, Codex and other MCP clients run the same command as a stdio server: `npx -y github:marco-vrinssen/cosmos-mcp#semver:^1`, with `COSMOS_USERNAME` and `COSMOS_PASSWORD` in its environment unless the login is in the macOS keychain.
+Cursor, VS Code, Codex and other MCP clients run the same command as a stdio server: `npx -y github:marco-vrinssen/cosmos-mcp#semver:^1`, with `COSMOS_USERNAME` and `COSMOS_PASSWORD` in its environment.
 
 ### Your own Worker
 

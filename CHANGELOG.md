@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (2026-10-26)
+
+- The login comes only from `COSMOS_USERNAME` and `COSMOS_PASSWORD` in the environment. The macOS keychain item `cosmos.so` is no longer read.
+
 ## 1.0.0 (2026-10-26)
 
 - First release, built on the Cosmos client of the Cosmos Unofficial Figma plugin.
