@@ -35,4 +35,6 @@ test('found collections open and search by their links', async () => {
 
 test('signed in, collections lists your own', { skip: !process.env.COSMOS_PASSWORD && 'COSMOS_USERNAME and COSMOS_PASSWORD not set' }, async () => {
   assert.match(await collections({}), /^Collections of @[\w.-]+ \(https:\/\/www\.cosmos\.so\/[\w.-]+\), private ones included:/);
+  const user = (await collections({ query: 'references' })).match(/https:\/\/www\.cosmos\.so\/([\w.-]+)\//)[1];
+  assert.match(await collections({ user }), new RegExp(`^Collections of .+ \\(https://www\\.cosmos\\.so/${user}\\):\\n- `));
 });

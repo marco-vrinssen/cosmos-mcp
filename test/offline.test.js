@@ -128,7 +128,7 @@ test('signed in, requests carry the token and a rejected token signs in again on
         rejected = true;
         return authError;
       }
-      return [200, { data: { clusters: {
+      return [200, { data: { list: {
         items: [{ name: 'Chairs', slug: 'chairs', isPrivate: false, numberOfElements: 12,
           subClusters: { items: [{ name: 'Eames', slug: 'eames', isPrivate: true, numberOfElements: 1 }] } }],
         meta: { nextPageCursor: null },
@@ -161,6 +161,33 @@ test('parallel calls share one sign-in', async () => {
   });
 });
 
+test('someone else\'s collections list through the profile query, optionally filtered by name', async () => {
+  const { collections } = await freshClient();
+  signInAs('marco@example.com', 'secret');
+  const answer = cosmos({
+    Profile: () => [200, { data: { user: { id: 9, username: 'ant', fullName: 'Ant', publicElementsCluster: { id: 1 } } } }],
+    UserCollections: (call) => [200, { data: { list: {
+      items: call.variables.pageCursor ? [{ name: 'Lamps', slug: 'lamps', isPrivate: false, numberOfElements: 1, subClusters: { items: [] } }] : [
+        { name: 'References', slug: 'references', isPrivate: false, numberOfElements: 680,
+          subClusters: { items: [{ name: 'Angels icon', slug: 'angels-icon', isPrivate: false, numberOfElements: 29 }] } },
+        { name: 'Chairs', slug: 'chairs', isPrivate: false, numberOfElements: 3, subClusters: { items: [] } },
+      ],
+      meta: { nextPageCursor: call.variables.pageCursor ? null : 'p2' },
+    } } }],
+  });
+
+  await withFetch(answer, async (calls) => {
+    assert.equal(await collections({ user: '@ant', query: 'refer' }), [
+      'Collections named like "refer" of Ant (@ant) (https://www.cosmos.so/ant):',
+      '- References, 680 elements: https://www.cosmos.so/ant/references',
+      '  - Angels icon, 29 elements: https://www.cosmos.so/ant/references/angels-icon',
+    ].join('\n'));
+    assert.deepEqual(calls.map((call) => call.op), ['Login', 'Me', 'Profile', 'UserCollections', 'UserCollections']);
+    assert.deepEqual(calls[3].variables, { userId: '9', pageCursor: null });
+    assert.deepEqual(calls[2].variables, { username: 'ant' });
+  });
+});
+
 test('a wrong password reports the refusal, and missing credentials explain the setup', async () => {
   signInAs('marco@example.com', 'wrong');
   const refused = await freshClient();
@@ -171,6 +198,7 @@ test('a wrong password reports the refusal, and missing credentials explain the 
   const signedOut = await freshClient();
   await withFetch(() => assert.fail('no request without credentials'), async () => {
     await assert.rejects(signedOut.collections({}), (error) => error.message.startsWith(SETUP));
+    await assert.rejects(signedOut.collections({ user: 'ant' }), (error) => error.message.startsWith(SETUP));
   });
 });
 

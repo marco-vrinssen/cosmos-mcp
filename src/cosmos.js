@@ -61,12 +61,17 @@ const PROFILE = `query Profile($username: String!) {
   user(username: $username) { id username fullName publicElementsCluster { id } }
 }`;
 
+const LIST = `items { name slug isPrivate numberOfElements subClusters { items { name slug isPrivate numberOfElements } } }
+    meta { nextPageCursor }`;
+
 // Listing collections needs a sign-in, even for public ones. Private ones come back because the request carries the session.
 const MY_COLLECTIONS = `query MyCollections($userId: UserId!, $pageCursor: String) {
-  clusters(filters: { ownerId: $userId }, meta: { pageSize: 20, pageCursor: $pageCursor }) {
-    items { name slug isPrivate numberOfElements subClusters { items { name slug isPrivate numberOfElements } } }
-    meta { nextPageCursor }
-  }
+  list: clusters(filters: { ownerId: $userId }, meta: { pageSize: 20, pageCursor: $pageCursor }) { ${LIST} }
+}`;
+
+// The query the web app's profile pages use for anyone's public collections. Cosmos answers it only to a signed-in caller.
+const USER_COLLECTIONS = `query UserCollections($userId: UserId!, $pageCursor: String) {
+  list: userClusters(userId: $userId, meta: { pageSize: 20, pageCursor: $pageCursor }) { ${LIST} }
 }`;
 
 const FIND_COLLECTIONS = `query FindCollections($searchTerm: String!) {
@@ -241,8 +246,8 @@ export async function readCollection({ link, limit, cursor }) {
   ].filter((line) => line != null).join('\n');
 }
 
-export async function collections({ query }) {
-  if (query) {
+export async function collections({ query, user }) {
+  if (query && !user) {
     const { searchClusters } = await request(FIND_COLLECTIONS, { searchTerm: query });
     if (!searchClusters.items.length) return `No collection on Cosmos matches "${query}".`;
     return [
@@ -256,22 +261,29 @@ export async function collections({ query }) {
   }
 
   const current = await signedIn();
-  if (!current) throw new Error(`${SETUP}\nSigned out, pass a query to find public collections instead.`);
-  const mine = [];
+  if (!current) {
+    throw new Error(`${SETUP}\nSigned out, pass only a query to find public collections on all of Cosmos, or read a profile link with get_collection.`);
+  }
+  const { username } = user ? parseLink(user.includes('cosmos.so') ? user : pageUrl(user.replace(/^@/, ''))) : current;
+  const owner = user ? await resolve(pageUrl(username)) : { url: pageUrl(username), name: `@${username}`, scope: { userId: current.userId } };
+  const own = owner.scope.userId === current.userId;
+  const found = [];
   let pageCursor = null;
   do {
-    const { clusters } = await request(MY_COLLECTIONS, { userId: current.userId, pageCursor });
-    mine.push(...clusters.items);
-    pageCursor = clusters.meta.nextPageCursor;
+    const { list } = await request(own ? MY_COLLECTIONS : USER_COLLECTIONS, { userId: owner.scope.userId, pageCursor });
+    found.push(...list.items);
+    pageCursor = list.meta.nextPageCursor;
   } while (pageCursor);
 
+  const named = query ? ` named like "${query}"` : '';
+  const shown = found.filter((cluster) => !query || cluster.name.toLowerCase().includes(query.toLowerCase()));
   const line = (cluster, url) => `${cluster.name}, ${count(cluster.numberOfElements)}${cluster.isPrivate ? ', private' : ''}: ${url}`;
-  if (!mine.length) return `No collections yet on ${pageUrl(current.username)}.`;
+  if (!shown.length) return `No collections${named} on ${owner.url}.`;
   return [
-    `Collections of @${current.username} (${pageUrl(current.username)}), private ones included:`,
-    ...mine.flatMap((cluster) => [
-      `- ${line(cluster, pageUrl(current.username, cluster.slug))}`,
-      ...cluster.subClusters.items.map((sub) => `  - ${line(sub, pageUrl(current.username, cluster.slug, sub.slug))}`),
+    `Collections${named} of ${owner.name} (${owner.url})${own ? ', private ones included' : ''}:`,
+    ...shown.flatMap((cluster) => [
+      `- ${line(cluster, `${owner.url}/${cluster.slug}`)}`,
+      ...cluster.subClusters.items.map((sub) => `  - ${line(sub, `${owner.url}/${cluster.slug}/${sub.slug}`)}`),
     ]),
   ].join('\n');
 }

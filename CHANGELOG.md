@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 (2026-10-26)
+
+- `collections` takes a `user`, a username or profile link, and lists that user's public collections with their subcollections. A `query` next to it keeps only the collections named like it. Needs a sign-in, because Cosmos answers that query only to signed-in callers.
+
 ## 1.0.1 (2026-10-26)
 
 - The login comes only from `COSMOS_USERNAME` and `COSMOS_PASSWORD` in the environment. The macOS keychain item `cosmos.so` is no longer read.

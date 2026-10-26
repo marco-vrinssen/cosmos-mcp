@@ -58,13 +58,15 @@ export function createServer() {
 
   server.registerTool('collections', {
     title: 'Cosmos collections',
-    description: 'Without a query: the signed-in user\'s own collections with their subcollections, private ones included. '
-      + 'With a query: public collections on all of Cosmos that match it, with owners and follower counts. Returns collection links.',
+    description: 'With only a query: public collections on all of Cosmos that match it, with owners and follower counts. '
+      + 'With a user: that user\'s public collections with their subcollections, optionally only those named like the query. '
+      + 'With neither: the signed-in user\'s own collections, private ones included. Listing by user needs a sign-in. Returns collection links.',
     inputSchema: z.object({
-      query: z.string().trim().min(1).max(100).optional().describe('Topic or name to find collections by. Leave out to list your own'),
+      query: z.string().trim().min(1).max(100).optional().describe('Topic or name to find collections by'),
+      user: link.optional().describe('Username or profile link whose collections to list, like https://www.cosmos.so/<username>'),
     }),
     annotations: hints,
-  }, async (input) => text(await cached(`collections:${input.query ?? ''}`, () => collections(input))));
+  }, async (input) => text(await cached(`collections:${JSON.stringify(input)}`, () => collections(input))));
 
   server.registerTool('get_collection', {
     title: 'Read a Cosmos collection',
