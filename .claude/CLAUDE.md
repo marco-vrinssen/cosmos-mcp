@@ -2,7 +2,8 @@
 
 ## Rules
 
-- A read-only MCP server for Cosmos (cosmos.so) with three tools: `search`, `collections` and `get_collection`. Others run it from GitHub with their own Cosmos login. It ships as a plain MCP server, never wrapped in a plugin.
+- A read-only MCP server for Cosmos (cosmos.so) with three tools: `search`, `collections` and `get_collection`. Others run it from GitHub with their own Cosmos login. It ships as a plain MCP server, never wrapped in a plugin, since an MCP server installs on its own.
+- `src/index.js` starts the stdio server, `src/server.js` defines the tools, `src/cosmos.js` talks to Cosmos and `src/worker.js` serves the same tools on Cloudflare Workers.
 - Cosmos has no public API and GraphQL introspection is off. Every query stays in `src/cosmos.js`. When a call breaks, compare it with the requests the cosmos.so web app sends. Its Next.js chunks hold every operation by name, like `GetClusterBySlug`.
 - The client started as the `<script id="cosmos">` block of `marco-vrinssen/cosmos-figma-plugin`. A fix to a query there likely applies here too.
 - Fetch only `api.www.cosmos.so`. Media on `cdn.cosmos.so` is linked, never fetched. Every request sends the User-Agent naming this repo and `x-client-name: cosmos-mcp`.
@@ -13,13 +14,14 @@
 - Cosmos offers no OAuth for other apps (checked 2026-10-26): no public API and no OAuth metadata.
 - Without credentials the server still starts and public reads work. Only `collections` without a query answers with `SETUP`.
 - Tool output stays plain text. The server instructions in `src/server.js` reach every model's context, so keep them short.
-- `wrangler.jsonc` keeps the Worker private. No Worker is deployed, because none of the owner's Workers calls it yet.
+- `wrangler.jsonc` keeps the Worker private, with no `workers.dev` URL and no preview URLs. Only other Workers reach it, through a service binding.
 - MCP users follow `#semver:^1`. A breaking tool change needs a major version and the README updated to the new range.
 
 ## Checks
 
-- `npm test` after every change to `src/`. The offline tests mock `fetch`. The live tests read Cosmos, and the signed-in one runs only when credentials are set.
+- `npm test` after every change to `src/`. The offline tests mock `fetch`. The live tests read Cosmos. The signed-in one runs only when credentials are set.
 - Try the tools by hand with `npx @modelcontextprotocol/inspector node src/index.js`.
+- `npx wrangler deploy --dry-run` checks that the Worker bundles.
 
 ## Release
 
@@ -27,4 +29,4 @@
 2. Run `npm test` with credentials set, so the signed-in test runs too.
 3. Add the changes to `CHANGELOG.md`.
 4. Push to `main`, tag `vX.Y.Z` and create a GitHub release. `#semver:^1` resolves tags, so untagged commits never reach users.
-5. Once a private Worker serves one of the owner's Workers, run `npx wrangler deploy`.
+5. Deploy the Worker with `npm run deploy` only when another Worker binds to it.
