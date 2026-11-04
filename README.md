@@ -124,6 +124,6 @@ The offline tests replace `fetch` with answers shaped like Cosmos's. The live te
 
 ## For the Cosmos team
 
-I built this for my own work, next to the [Cosmos Unofficial](https://github.com/marco-vrinssen/cosmos-figma-plugin) Figma plugin. I am happy to move it to an official API or OAuth, rename it, change it or take it down. Open an issue here or reach me on [GitHub](https://github.com/marco-vrinssen).
+I built this for my own work, next to the [Cosmos Unofficial](https://github.com/marco-vrinssen/cosmos-plugin) Figma plugin. I am happy to move it to an official API or OAuth, rename it, change it or take it down. Open an issue here or reach me on [GitHub](https://github.com/marco-vrinssen).
 
 The Cosmos name belongs to Cosmos.

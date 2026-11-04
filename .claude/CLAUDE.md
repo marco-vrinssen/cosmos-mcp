@@ -4,7 +4,7 @@
 
 - A read-only MCP server for Cosmos (cosmos.so) with three tools: `search`, `collections` and `get_collection`. Others run it with their own Cosmos login.
 - Cosmos has no public API and GraphQL introspection is off. The web app's Next.js chunks hold every operation by name, like `GetClusterBySlug`.
-- The client started as the `<script id="cosmos">` block of `marco-vrinssen/cosmos-figma-plugin`. A fix to a query there likely applies here too.
+- The client started as the `<script id="cosmos">` block of `marco-vrinssen/cosmos-plugin`. A fix to a query there likely applies here too.
 - Fetch only `api.www.cosmos.so`. Media on `cdn.cosmos.so` is linked, never fetched. Every request also sends `x-client-name: cosmos-mcp`.
 - Errors carry `extensions.code`: `AUTHENTICATION` for a missing or expired token, `NOT_FOUND` for unknown users and collections, `AUTHORIZATION` for someone else's private data. Cosmos sends some as HTTP 200.
 - Pass ids as variables. An inline string literal fails the `ClusterId` type (checked 2026-10-26).
